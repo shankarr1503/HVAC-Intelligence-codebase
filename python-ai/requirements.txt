@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic
+numpy
+torch
+stable-baselines3[extra]
+casadi
+scikit-learn
+gym

@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  ai-service:
+    build: ./python-ai
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./python-ai:/app
+  backend:
+    build: ./dotnet-backend
+    ports:
+      - "5000:80"
+    depends_on:
+      - ai-service
+  dashboard:
+    build: ./dashboard
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
