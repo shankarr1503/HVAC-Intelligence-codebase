@@ -1,111 +1,114 @@
-# Intelligent Predictive Climate Control System
+# HVAC Intelligence Codebase
 
-This repository contains a research-grade platform for optimizing passenger comfort and energy efficiency in electric/autonomous vehicles using AI, reinforcement learning, and model predictive control.
-
-## Architecture
-
-- **python-ai** – machine learning, prediction, ML pipelines, simulation, AI service REST API.
-- **dotnet-backend** – vehicle communication, HVAC control logic, REST controllers, streaming service.
-- **dashboard** – React front-end for real-time monitoring.
-- **docker-compose.yml** – orchestrates services for local development.
-
-## Requirements
-
-- Python 3.11
-- .NET 8 SDK
-- Docker & Docker Compose
-- Node.js (for dashboard)
-
-## Getting Started
-
-### Python AI Service
-
-```bash
-cd python-ai
-python -m venv venv
-source venv/Scripts/activate  # or .\venv\Scripts\activate on Windows
-pip install -r requirements.txt
-python main_ai_service.py
-``` 
-
-### .NET Backend
-
-Navigate to `dotnet-backend` and restore/build:  
-```bash
-cd dotnet-backend
-dotnet restore
-dotnet run
-```
-
-### Dashboard
-
-```bash
-cd dashboard
-npm install
-npm start
-```
-
-### Using Docker Compose
-
-```bash
-docker-compose up --build
-```
-
-### Simulation Mode
-
-The Python simulator generates synthetic data and posts to the backend. Run:
-```bash
-python python-ai/simulation/simulator.py
-```
-
-* The simulator can also be extended to emit CAN bus messages via the C# `CanBusInterface.SimulateTelemetry` helper, enabling full digital‑twin testing of the vehicle layer.
+> **Note:** Much of the original code lived under the `python-ai/` subfolder.
+> The project has been refactored into a new `src/` directory; the legacy folder
+> is retained for reference but future development should use `src/`.
 
 
-## Training
+**Project Overview**
 
-Temperature model:
-```
-python python-ai/training/train_temperature_model.py
-```
+HVAC Intelligence is an open-source research platform for intelligent heating, ventilation,
+and air-conditioning (HVAC) systems. It combines machine learning, reinforcement learning,
+and optimization techniques to predict thermal comfort, minimize energy consumption, and
+control building climate dynamically. The codebase is intended for engineers, researchers,
+and contributors working on energy-efficient smart buildings.
 
-RL agent and environment:
-```
-python python-ai/training/train_rl_model.py
-```
+**Problem Statement**
 
-The `ClimateEnv` environment now contains simple thermal dynamics and a reward function rewarding comfort while penalizing energy use.  It terminates when battery depletes.  A unit test (`python-ai/tests/test_env_mpc.py`) verifies both the environment and the MPC solver.
+Traditional HVAC systems rely on simple thermostats and conservative setpoints, leading to
+poor occupant comfort and excessive energy usage. Modern buildings generate vast amounts of
+sensor data that can be harnessed by AI algorithms to anticipate thermal needs and adjust
+HVAC operations proactively. HVAC Intelligence aims to provide a modular, extensible
+toolkit that:
 
-## API Endpoints
+* Predicts occupant comfort and future temperatures
+* Estimates energy consumption of HVAC units
+* Optimizes control decisions using reinforcement learning and model predictive control
+* Simulates building thermal dynamics for testing and validation
 
-- `POST /predict-temperature` – returns predicted cabin temperature.
-- `POST /comfort-score` – returns passenger comfort score.
-- `POST /optimize-hvac` – returns optimal HVAC setting.
-- `POST /api/sensor/data` – ingest sensor data (C# backend).
+**Architecture Diagram & Description**
 
-## Project Structure
+The system is organized into several components: data pipeline, machine learning models,
+control algorithms, optimization routines, building simulation, and a FastAPI
+service. An `architecture.md` document in the `docs/` directory provides a detailed
+visual overview and explanation. Additional documentation covers the ML pipeline,
+reinforcement learning methods, simulation mechanics and API endpoints.
 
-See description above or inspect directories.
+See `docs/ml_pipeline.md`, `docs/reinforcement_learning.md`,
+`docs/building_simulation.md`, and `docs/api_reference.md` for full details.
 
-## Testing
+**Installation**
 
-Unit tests for Python modules are located under `python-ai/tests`. Run them with pytest from the `python-ai` directory:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-org/HVAC-Intelligence-codebase.git
+   cd HVAC-Intelligence-codebase
+   ```
+2. Create and activate a Python environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate       # on macOS/Linux
+   venv\Scripts\activate        # on Windows
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   # or install the package in editable mode for development
+   pip install -e .
+   ```
+4. (Optional) build and run Docker container:
+   ```bash
+   docker build -t hvac-intel .
+   docker run -p 8000:8000 hvac-intel
+   ```
 
-```bash
-pytest tests
-```
+**Example Usage**
 
-The .NET backend can add MSTest/NUnit projects later; current code is stubbed.
+* Train a model or run a simplified pipeline:
+  ```bash
+  python examples/train_model.py
+  # or
+  python examples/run_pipeline.py
+  ```
+* Train all models at once:
+  ```bash
+  python examples/train_models.py
+  ```
+* Simulate a building environment:
+  ```bash
+  python examples/simulate_building.py
+  ```
+* Demo real‑time optimization:
+  ```bash
+  python examples/realtime_optimization_demo.py
+  ```
+* Run a building simulation with an HVAC controller:
+  ```bash
+  python examples/run_simulation.py
+  ```
+* Demonstrate API predictions (requires server running):
+  ```bash
+  python examples/demo_prediction.py
+  ```
+* Start the API server for manual testing or integration:
+  ```bash
+  uvicorn src.api.api_server:app --reload
+  ```
 
-## API Documentation
+**Contribution Guide**
 
-FastAPI automatically provides OpenAPI/Swagger at `http://localhost:8000/docs` when the AI service is running.
+Please read `CONTRIBUTING.md` (or refer to `docs/` for instructions) before submitting
+issues or pull requests. We welcome enhancements, bug fixes, new models, and improved
+documentation. Follow these guidelines:
 
-The .NET backend has Swagger UI at `http://localhost:5000/swagger` once started in development mode, documenting the climate and sensor endpoints.
+1. Fork the repository and create a feature branch.
+2. Write clear, modular code and include tests.
+3. Update documentation in `docs/` and add examples as needed.
+4. Submit a pull request with a descriptive title and summary.
 
-## Example Dataset
+Refer to `CODE_OF_CONDUCT.md` for community standards.
 
-Located at `python-ai/data_ingestion/example_dataset.csv`.
+**License**
 
----
-
-Further development should expand models, add unit/integration tests, implement real CAN bus interfaces, and flesh out the React dashboard with charts and WebSocket connectivity.
+This project is licensed under the MIT License � see the [LICENSE](LICENSE) file for
+details.

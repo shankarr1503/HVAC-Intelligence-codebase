@@ -1,11 +1,12 @@
 version: '3.8'
 services:
   ai-service:
-    build: ./python-ai
+    build: .
     ports:
       - "8000:8000"
     volumes:
-      - ./python-ai:/app
+      - .:/app
+    command: uvicorn src.api.api_server:app --host 0.0.0.0 --port 8000
   backend:
     build: ./dotnet-backend
     ports:

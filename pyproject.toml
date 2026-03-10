@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hvac-intelligence"
+version = "0.1.0"
+description = "Intelligent HVAC optimization platform for energy-efficient buildings."
+authors = [
+    {name = "HVAC Intelligence Contributors"}
+]
+license = {text = "MIT"}
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "numpy",
+    "pandas",
+    "torch",
+    "scikit-learn",
+    "stable-baselines3[extra]",
+    "casadi",
+    "gym",
+    "matplotlib",
+    "streamlit",
+]
