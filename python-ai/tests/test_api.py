@@ -33,7 +33,22 @@ def test_comfort_score():
     # check engineered fallback
     assert score >= 0.0
 
-# if torch is not installed the prediction model will return default or error
+def test_optimize_hvac_heats_when_cold():
+    resp = client.post("/optimize-hvac", json={"current_temp": 15, "target_temp": 22, "outside_temp": 10})
+    assert resp.status_code == 200
+    assert resp.json()["hvac_setting"] > 0
+
+
+def test_rejects_out_of_range_input():
+    payload = {"temp": 22, "humidity": 500, "heart_rate": 70, "skin_temp": 33, "seat_temp": 22}
+    assert client.post("/comfort-score", json=payload).status_code == 422
+
+
+def test_comfort_score_uses_engineered_index_without_weights():
+    from feature_engineering.comfort_index import compute_comfort_score
+    payload = {"temp": 25, "humidity": 60, "heart_rate": 70, "skin_temp": 33, "seat_temp": 22}
+    score = client.post("/comfort-score", json=payload).json()["comfort_score"]
+    assert abs(score - compute_comfort_score(25, 60, 70, 33, 22)) < 1e-6
 
 if __name__ == "__main__":
     print("Testing predict_temperature...")

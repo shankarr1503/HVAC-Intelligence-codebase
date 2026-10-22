@@ -1,7 +1,6 @@
 # comfort_model.py
 """Simple regression or classifier for comfort."""
 
-import torch
 import torch.nn as nn
 
 
