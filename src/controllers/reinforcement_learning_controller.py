@@ -1,6 +1,6 @@
 """Reinforcement learning controller that interacts with an environment."""
 
-from typing import Any, Dict, Tuple
+from typing import Any, Tuple
 import numpy as np
 
 

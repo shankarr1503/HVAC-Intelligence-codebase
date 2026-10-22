@@ -1,6 +1,5 @@
 """Predictor for HVAC energy consumption."""
 
-from typing import Any
 import numpy as np
 
 
