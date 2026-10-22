@@ -26,6 +26,7 @@ async def comfort_score(req: ComfortRequest):
 
 @router.post("/optimize-hvac", response_model=OptimizeResponse)
 async def optimize_hvac(req: OptimizeRequest):
+    # power is signed like BuildingEnvironment.step: positive heats, negative cools
     action = "off"
     power = 0.0
     if req.current_temp < req.setpoint - 0.5:
@@ -33,5 +34,5 @@ async def optimize_hvac(req: OptimizeRequest):
         power = 1.0
     elif req.current_temp > req.setpoint + 0.5:
         action = "cool"
-        power = 1.0
+        power = -1.0
     return OptimizeResponse(action=action, power=power)
