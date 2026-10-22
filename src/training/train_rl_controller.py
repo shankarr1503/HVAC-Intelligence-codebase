@@ -1,5 +1,5 @@
 """Example RL training loop using a simple gym environment."""
-import gym
+import gymnasium as gym
 import numpy as np
 from stable_baselines3 import PPO
 
@@ -16,13 +16,14 @@ def make_env():
             self.state = np.zeros(5)
             self.step_count = 0
 
-        def reset(self):
+        def reset(self, seed=None, options=None):
+            super().reset(seed=seed)
             self.state = np.array([22.0, 10.0, 0.5, 1.0, 0.0], dtype=np.float32)
             self.step_count = 0
-            return self.state
+            return self.state, {}
 
         def step(self, action):
-            hvac_power = action[0]
+            hvac_power = float(action[0])
             indoor, outdoor, hum, occ, energy = self.state
             # simple dynamics
             indoor += (outdoor - indoor) * 0.1 + hvac_power * 0.5
@@ -32,8 +33,8 @@ def make_env():
             reward = -0.5 * energy - 0.5 * comfort_penalty
             self.state = np.array([indoor, outdoor, hum, occ, energy], dtype=np.float32)
             self.step_count += 1
-            done = self.step_count >= 100
-            return self.state, reward, done, {}
+            truncated = self.step_count >= 100
+            return self.state, float(reward), False, truncated, {}
 
     return SimpleHVACEnv()
 
