@@ -1,11 +1,13 @@
 # simulator.py
 """Standalone simulation engine for generating synthetic sensor and telemetry data."""
 
+import os
 import random
 import time
 import requests
 
-API_URL = "http://backend:5000/api/sensor/data"  # or localhost in non-docker
+# backend sensor ingestion endpoint; use http://backend:8080/sensor-data inside docker compose
+API_URL = os.environ.get("BACKEND_SENSOR_URL", "http://localhost:5000/sensor-data")
 
 
 def generate_data():
@@ -29,7 +31,7 @@ def run_simulation(interval=1.0):
     while True:
         data = generate_data()
         try:
-            requests.post(API_URL, json=data)
+            requests.post(API_URL, json=data, timeout=5).raise_for_status()
         except Exception as e:
             print(f"failed to send: {e}")
         time.sleep(interval)

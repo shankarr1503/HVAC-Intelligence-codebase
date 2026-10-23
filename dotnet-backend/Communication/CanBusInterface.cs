@@ -1,15 +1,15 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
 namespace predictive_climate_control.Communication
 {
     public class CanBusInterface
     {
-        private readonly Queue<Tuple<string, byte[]>> _inbox = new();
+        private readonly ConcurrentQueue<Tuple<string, byte[]>> _inbox = new();
 
         // event raised when a message is received
-        public event Action<string, byte[]> OnMessageReceived;
+        public event Action<string, byte[]>? OnMessageReceived;
 
         public void SendMessage(string id, byte[] payload)
         {
@@ -23,19 +23,14 @@ namespace predictive_climate_control.Communication
 
         public byte[] ReceiveMessage()
         {
-            if (_inbox.Count > 0)
-            {
-                var msg = _inbox.Dequeue();
-                return msg.Item2;
-            }
-            return Array.Empty<byte>();
+            return _inbox.TryDequeue(out var msg) ? msg.Item2 : Array.Empty<byte>();
         }
 
         // helper to simulate periodic telemetry
         public void SimulateTelemetry(float cabinTemp, float hvacPower)
         {
-            var payload = BitConverter.GetBytes(cabinTemp);
-            SendMessage("temp", payload);
+            SendMessage("temp", BitConverter.GetBytes(cabinTemp));
+            SendMessage("hvac_power", BitConverter.GetBytes(hvacPower));
         }
     }
 }

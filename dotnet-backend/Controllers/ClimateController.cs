@@ -5,29 +5,39 @@ using predictive_climate_control.Services;
 namespace predictive_climate_control.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
     public class ClimateController : ControllerBase
     {
-        private readonly ClimateOptimizationService _optimizationService;
+        private const float DefaultTargetTemp = 22f;
 
-        public ClimateController(ClimateOptimizationService optimizationService)
+        private readonly ClimateOptimizationService _optimizationService;
+        private readonly HvacController _hvac;
+
+        public ClimateController(ClimateOptimizationService optimizationService, HvacController hvac)
         {
             _optimizationService = optimizationService;
+            _hvac = hvac;
         }
 
         [HttpPost("/climate/prediction")]
-        public ActionResult<ClimatePrediction> Predict([FromBody] SensorData data)
+        public async Task<ActionResult<ClimatePrediction>> Predict([FromBody] SensorData data, CancellationToken ct)
         {
-            // call Python AI service via REST/gRPC
-            // stubbed response
-            return new ClimatePrediction { PredictedTemperature = 22.5 };
+            return await _optimizationService.PredictAsync(data, ct);
         }
 
         [HttpPost("/hvac/control")]
-        public IActionResult Control([FromBody] SensorData data)
+        public async Task<ActionResult<HvacCommand>> Control([FromBody] SensorData data,
+            [FromQuery] float targetTemp = DefaultTargetTemp, CancellationToken ct = default)
         {
-            // send HVAC command
-            return Ok();
+            try
+            {
+                var command = await _optimizationService.OptimizeAsync(data, targetTemp, ct);
+                _hvac.SendCommand(command.HvacSetting);
+                return command;
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(StatusCodes.Status502BadGateway, "AI service unavailable");
+            }
         }
     }
 }

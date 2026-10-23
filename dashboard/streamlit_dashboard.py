@@ -8,7 +8,7 @@ def main():
     st.title("HVAC Intelligence Dashboard")
 
     st.header("Temperature Trends")
-    times = pd.date_range(start="2026-01-01", periods=24, freq="H")
+    times = pd.date_range(start="2026-01-01", periods=24, freq="h")
     temps = np.random.normal(loc=22, scale=2, size=24)
     st.line_chart(pd.DataFrame({'temperature': temps}, index=times))
 

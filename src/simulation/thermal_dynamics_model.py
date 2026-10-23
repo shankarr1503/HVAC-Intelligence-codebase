@@ -1,6 +1,5 @@
 """More detailed thermal dynamics used by building environment."""
 
-from typing import Dict
 
 
 class ThermalDynamicsModel:

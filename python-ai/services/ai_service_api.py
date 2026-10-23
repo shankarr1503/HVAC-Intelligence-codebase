@@ -2,8 +2,8 @@
 """FastAPI server exposing prediction and optimization endpoints for CLI integration with C# backend."""
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import List
+from pydantic import BaseModel, Field
+from pathlib import Path
 import uvicorn
 import numpy as np
 import torch
@@ -12,6 +12,7 @@ from models.temperature_predictor import TemperaturePredictor, predict as temp_p
 from models.comfort_model import ComfortModel
 from control.mpc_controller import MPCController
 from feature_engineering.comfort_index import compute_comfort_score
+from simulation.cabin_thermal_simulator import simulate_step
 from utils.logger import get_logger
 from utils.config import settings
 
@@ -19,44 +20,62 @@ logger = get_logger(__name__)
 
 app = FastAPI(title="AI Climate Control Service")
 
-# Pydantic request/response models
+# Pydantic request/response models; bounds reject physically implausible input
+Temperature = Field(..., ge=-50, le=80, description="degrees C")
+Percent = Field(..., ge=0, le=100)
+Fraction = Field(..., ge=0, le=1)
+
+
 class SensorData(BaseModel):
-    cabin_temp: float
-    outside_temp: float
-    humidity: float
-    solar_radiation: float
-    vehicle_speed: float
-    passenger_count: int
-    battery_level: float
-    hvac_power: float
-    skin_temperature: float
-    heart_rate: float
-    seat_temperature: float
-    air_quality: float
+    cabin_temp: float = Temperature
+    outside_temp: float = Temperature
+    humidity: float = Percent
+    solar_radiation: float = Fraction
+    vehicle_speed: float = Field(..., ge=0, le=300, description="km/h")
+    passenger_count: int = Field(..., ge=0, le=20)
+    battery_level: float = Fraction
+    hvac_power: float = Field(..., ge=-2, le=2)
+    skin_temperature: float = Temperature
+    heart_rate: float = Field(..., ge=0, le=250)
+    seat_temperature: float = Temperature
+    air_quality: float = Fraction
 
 class PredictionResponse(BaseModel):
     predicted_temp: float
 
 class ComfortRequest(BaseModel):
-    temp: float
-    humidity: float
-    heart_rate: float
-    skin_temp: float
-    seat_temp: float
+    temp: float = Temperature
+    humidity: float = Percent
+    heart_rate: float = Field(..., ge=0, le=250)
+    skin_temp: float = Temperature
+    seat_temp: float = Temperature
 
 class ComfortResponse(BaseModel):
     comfort_score: float
 
 class OptimizationRequest(BaseModel):
-    current_temp: float
-    target_temp: float
+    current_temp: float = Temperature
+    target_temp: float = Field(..., ge=10, le=35, description="degrees C")
+    outside_temp: float = Field(20.0, ge=-50, le=80, description="degrees C")
 
 class OptimizationResponse(BaseModel):
     hvac_setting: float
 
-# load models (placeholder: assume saved models)
-TEMP_MODEL = TemperaturePredictor()
-COMFORT_MODEL = ComfortModel()
+def _load_weights(model: torch.nn.Module, filename: str):
+    """Return the model with trained weights, or None if no weights exist."""
+    path = Path(settings.model_path) / filename
+    if not path.exists():
+        logger.warning(f"No trained weights at {path}; using fallback")
+        return None
+    model.load_state_dict(torch.load(path, map_location="cpu"))
+    model.eval()
+    return model
+
+
+# trained models are optional; without weights the endpoints use the
+# physics simulator and engineered comfort index instead of random networks
+TEMP_MODEL = _load_weights(TemperaturePredictor(), "temperature_predictor.pt")
+COMFORT_MODEL = _load_weights(ComfortModel(), "comfort_model.pt")
 MPC = MPCController()
 
 @app.post("/predict-temperature", response_model=PredictionResponse)
@@ -76,6 +95,10 @@ def predict_temperature(data: SensorData):
             data.seat_temperature,
             data.air_quality,
         ]], dtype=np.float32)
+        if TEMP_MODEL is None:
+            pred = simulate_step(data.cabin_temp, data.outside_temp, data.hvac_power,
+                                 data.solar_radiation, 0.1 * data.passenger_count)
+            return PredictionResponse(predicted_temp=float(pred))
         pred = temp_predict(TEMP_MODEL, torch.from_numpy(features).float())
         return PredictionResponse(predicted_temp=float(pred.flatten()[0]))
     except Exception as e:
@@ -86,13 +109,14 @@ def predict_temperature(data: SensorData):
 @app.post("/comfort-score", response_model=ComfortResponse)
 def comfort_score(req: ComfortRequest):
     try:
-        # first try ML model, fallback to engineered index
-        features = np.array([[req.temp, req.humidity, req.heart_rate, req.skin_temp, req.seat_temp]], dtype=np.float32)
-        score = COMFORT_MODEL(torch.from_numpy(features).float())
-        val = float(score.detach().numpy().flatten()[0])
-        if val == 0.0:
+        # use the trained ML model when available, otherwise the engineered index
+        if COMFORT_MODEL is None:
             val = compute_comfort_score(req.temp, req.humidity, req.heart_rate, req.skin_temp, req.seat_temp)
-        return ComfortResponse(comfort_score=val)
+            return ComfortResponse(comfort_score=val)
+        features = np.array([[req.temp, req.humidity, req.heart_rate, req.skin_temp, req.seat_temp]], dtype=np.float32)
+        with torch.no_grad():
+            score = COMFORT_MODEL(torch.from_numpy(features).float())
+        return ComfortResponse(comfort_score=float(score.numpy().flatten()[0]))
     except Exception as e:
         import traceback
         logger.error(f"Error in comfort score: {e}\n{traceback.format_exc()}")
@@ -101,7 +125,7 @@ def comfort_score(req: ComfortRequest):
 @app.post("/optimize-hvac", response_model=OptimizationResponse)
 def optimize_hvac(req: OptimizationRequest):
     try:
-        setting = MPC.solve(req.current_temp, req.target_temp, outside_temp=req.current_temp)  # assume outside equals current for simplicity
+        setting = MPC.solve(req.current_temp, req.target_temp, outside_temp=req.outside_temp)
         return OptimizationResponse(hvac_setting=setting)
     except Exception as e:
         import traceback

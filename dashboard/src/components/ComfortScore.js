@@ -4,7 +4,7 @@ const ComfortScore = ({ data }) => (
   <div>
     <h2>Comfort Score</h2>
     <ul>
-      {data.map((score, idx) => <li key={idx}>{score.toFixed(2)}</li>)}
+      {data.map((score, idx) => <li key={idx}>{Number(score).toFixed(2)}</li>)}
     </ul>
   </div>
 );

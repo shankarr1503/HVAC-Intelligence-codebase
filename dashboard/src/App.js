@@ -1,20 +1,42 @@
 import React, { useEffect, useState } from 'react';
-import io from 'socket.io-client';
 import TemperatureChart from './components/TemperatureChart';
 import ComfortScore from './components/ComfortScore';
 
-const socket = io('http://localhost:5000');
+const TELEMETRY_URL = process.env.REACT_APP_TELEMETRY_URL || 'ws://localhost:5000/ws/telemetry';
+// keep only the most recent samples so the page doesn't grow without bound
+const MAX_POINTS = 100;
+const RECONNECT_MS = 3000;
+
+const append = (list, value) => [...list, value].slice(-MAX_POINTS);
 
 function App() {
   const [data, setData] = useState({temp: [], comfort: []});
 
   useEffect(() => {
-    socket.on('telemetry', (msg) => {
-      setData(prev => ({
-        temp: [...prev.temp, msg.cabin_temp],
-        comfort: [...prev.comfort, msg.comfort_score]
-      }));
-    });
+    let socket;
+    let reconnectTimer;
+    let closed = false;
+
+    const connect = () => {
+      socket = new WebSocket(TELEMETRY_URL);
+      socket.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        setData(prev => ({
+          temp: append(prev.temp, msg.cabin_temp),
+          comfort: append(prev.comfort, msg.comfort_score)
+        }));
+      };
+      socket.onclose = () => {
+        if (!closed) reconnectTimer = setTimeout(connect, RECONNECT_MS);
+      };
+    };
+    connect();
+
+    return () => {
+      closed = true;
+      clearTimeout(reconnectTimer);
+      socket.close();
+    };
   }, []);
 
   return (

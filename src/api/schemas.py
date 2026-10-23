@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Dict
 
 
 class TemperatureRequest(BaseModel):
-    features: Dict[str, float]
+    features: Dict[str, float] = Field(..., min_length=1)
 
 
 class TemperatureResponse(BaseModel):
@@ -12,7 +12,7 @@ class TemperatureResponse(BaseModel):
 
 class ComfortRequest(BaseModel):
     temperature: float
-    humidity: float
+    humidity: float = Field(..., ge=0.0, le=1.0, description="Relative humidity as a fraction (0-1)")
 
 
 class ComfortResponse(BaseModel):

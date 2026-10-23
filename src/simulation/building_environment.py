@@ -1,6 +1,5 @@
 """Representation of building thermal environment."""
 
-from typing import Dict
 
 
 class BuildingEnvironment:

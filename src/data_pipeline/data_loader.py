@@ -1,7 +1,9 @@
 """Data loading utilities for building sensor datasets."""
 
-from typing import List
+from pathlib import Path
 import pandas as pd
+
+DATASETS_DIR = Path(__file__).resolve().parents[2] / 'datasets'
 
 
 def load_csv(filepath: str) -> pd.DataFrame:
@@ -18,4 +20,4 @@ def load_csv(filepath: str) -> pd.DataFrame:
 
 def load_sample_data() -> pd.DataFrame:
     """Return a small sample dataset included with the repo."""
-    return load_csv('datasets/sample_building_data.csv')
+    return load_csv(str(DATASETS_DIR / 'sample_building_data.csv'))

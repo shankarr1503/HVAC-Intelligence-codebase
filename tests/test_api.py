@@ -25,3 +25,13 @@ def test_optimize_hvac_endpoint():
     data = resp.json()
     assert data.get("action") in ["heat", "cool", "off"]
     assert isinstance(data.get("power"), (int, float))
+
+
+def test_predict_temperature_rejects_empty_features():
+    resp = client.post("/predict-temperature", json={"features": {}})
+    assert resp.status_code == 422
+
+
+def test_optimize_hvac_cooling_is_negative():
+    resp = client.post("/optimize-hvac", json={"current_temp": 26, "outside_temp": 30, "setpoint": 22})
+    assert resp.json() == {"action": "cool", "power": -1.0}

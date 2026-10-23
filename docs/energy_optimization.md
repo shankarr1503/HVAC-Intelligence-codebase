@@ -11,7 +11,7 @@ The weighting parameter `alpha` can be tuned for different priorities.
 
 ## Optimizer
 
-`energy_optimizer.minimize_energy` is a placeholder for more sophisticated
+`energy_optimizer.minimize_energy` wraps `scipy.optimize.minimize` and can be replaced by more sophisticated
 solvers. In research projects, this could wrap casadi solvers, genetic algorithms,
 or custom gradient-based methods.
 

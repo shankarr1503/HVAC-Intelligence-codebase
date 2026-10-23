@@ -1,6 +1,5 @@
 """Cost functions used by optimizers."""
 
-from typing import Dict
 
 
 def comfort_energy_cost(comfort_score: float, energy_use: float, alpha: float = 0.5) -> float:

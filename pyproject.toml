@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,6 +10,7 @@ authors = [
     {name = "HVAC Intelligence Contributors"}
 ]
 license = {text = "MIT"}
+requires-python = ">=3.9"
 dependencies = [
     "fastapi",
     "uvicorn",
@@ -18,9 +19,14 @@ dependencies = [
     "pandas",
     "torch",
     "scikit-learn",
+    "scipy",
     "stable-baselines3[extra]",
     "casadi",
-    "gym",
+    "gymnasium",
     "matplotlib",
     "streamlit",
 ]
+
+[tool.setuptools.packages.find]
+# code imports the package as `src.<module>`, so install it under that name
+include = ["src*"]

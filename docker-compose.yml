@@ -1,21 +1,27 @@
-version: '3.8'
 services:
+  # cabin climate AI service called by the backend (python-ai/)
   ai-service:
-    build: .
+    build: ./python-ai
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app
-    command: uvicorn src.api.api_server:app --host 0.0.0.0 --port 8000
+    environment:
+      - MODEL_PATH=/app/artifacts
+  # building-level research API (src/api)
+  building-api:
+    build: .
+    ports:
+      - "8001:8000"
   backend:
     build: ./dotnet-backend
     ports:
-      - "5000:80"
+      - "5000:8080"
+    environment:
+      - AiService__BaseUrl=http://ai-service:8000
     depends_on:
       - ai-service
   dashboard:
     build: ./dashboard
     ports:
-      - "3000:3000"
+      - "3000:80"
     depends_on:
       - backend

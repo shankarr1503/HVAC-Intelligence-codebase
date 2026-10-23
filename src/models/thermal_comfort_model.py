@@ -1,6 +1,5 @@
 """Thermal comfort prediction using simple regression or neural network."""
 
-from typing import Any
 import numpy as np
 
 

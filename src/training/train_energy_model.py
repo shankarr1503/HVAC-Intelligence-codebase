@@ -1,15 +1,13 @@
 """Script for training the energy consumption predictor on sample data."""
-import numpy as np
-from pathlib import Path
 from src.models.energy_consumption_predictor import EnergyConsumptionPredictor
-from src.data_pipeline.data_loader import load_csv
+from src.data_pipeline.data_loader import DATASETS_DIR, load_csv
 from src.data_pipeline.data_cleaning import drop_invalid_rows
 from src.data_pipeline.feature_engineering import add_time_features
 
 
 def main():
     # load dataset
-    df = load_csv('datasets/sample_building_dataset.csv')
+    df = load_csv(str(DATASETS_DIR / 'sample_building_dataset.csv'))
     df = drop_invalid_rows(df, ['temperature', 'humidity', 'energy_use'])
     df = add_time_features(df)
     X = df[['temperature', 'humidity']].values

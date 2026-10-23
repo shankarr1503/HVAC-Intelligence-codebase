@@ -1,8 +1,9 @@
 # HVAC Intelligence Codebase
 
-> **Note:** Much of the original code lived under the `python-ai/` subfolder.
-> The project has been refactored into a new `src/` directory; the legacy folder
-> is retained for reference but future development should use `src/`.
+> **Layout:** `src/` is the building-level research package (models, controllers,
+> simulation and the `building-api` FastAPI service). `python-ai/` is the cabin
+> climate AI service that the .NET backend (`dotnet-backend/`) calls. See
+> `python-ai/README.md` for that service.
 
 
 **Project Overview**
@@ -56,11 +57,16 @@ See `docs/ml_pipeline.md`, `docs/reinforcement_learning.md`,
    # or install the package in editable mode for development
    pip install -e .
    ```
-4. (Optional) build and run Docker container:
+4. (Optional) run the full stack with Docker Compose:
    ```bash
-   docker build -t hvac-intel .
-   docker run -p 8000:8000 hvac-intel
+   docker compose up --build
    ```
+   | Service | Source | URL |
+   |---|---|---|
+   | `ai-service` | `python-ai/` | http://localhost:8000 |
+   | `building-api` | `src/api` | http://localhost:8001 |
+   | `backend` | `dotnet-backend/` | http://localhost:5000 |
+   | `dashboard` | `dashboard/` | http://localhost:3000 |
 
 **Example Usage**
 
@@ -110,5 +116,5 @@ Refer to `CODE_OF_CONDUCT.md` for community standards.
 
 **License**
 
-This project is licensed under the MIT License � see the [LICENSE](LICENSE) file for
+This project is licensed under the MIT License, see the [LICENSE](LICENSE) file for
 details.

@@ -17,9 +17,16 @@ class TemperaturePredictor(nn.Module):
             nn.Dropout(0.3),
             nn.Linear(hidden_dim, output_dim),
         )
+        # input normalization statistics, saved with the weights in state_dict
+        self.register_buffer("feature_mean", torch.zeros(input_dim))
+        self.register_buffer("feature_std", torch.ones(input_dim))
+
+    def set_normalization(self, features: torch.Tensor):
+        self.feature_mean.copy_(features.mean(dim=0))
+        self.feature_std.copy_(features.std(dim=0) + 1e-6)
 
     def forward(self, x):
-        return self.net(x)
+        return self.net((x - self.feature_mean) / self.feature_std)
 
 
 def predict(model: TemperaturePredictor, features):
